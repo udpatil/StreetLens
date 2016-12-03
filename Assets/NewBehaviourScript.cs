@@ -14,8 +14,6 @@ public class NewBehaviourScript : MonoBehaviour {
     string val2;
     private bool startEverything = false;
     public Text alert;
-    string one = "16512 Blue Whetstone Lane, Odessa, FL 33556";
-	string two = "5000 North Central Avenue, Tampa, FL 33603";
 	string url = "";
     //bool startHTTPrequest = false;
 	HashSet<Coordinate> lats = new HashSet<Coordinate>();
@@ -61,7 +59,7 @@ public class NewBehaviourScript : MonoBehaviour {
             {
                 input.text = input.text.Substring(0, input.text.Length - x) + "+" + input.text.Substring(x);
             }
-            if (one.Substring(x, one.Length - x).Equals(","))
+            if (input.text.Substring(x, input.text.Length - x).Equals(","))
             {
                 input.text = input.text.Substring(0, input.text.Length - x) + input.text.Substring(x);
                 x--;
@@ -80,7 +78,7 @@ public class NewBehaviourScript : MonoBehaviour {
                 x--;
             }
         }
-        url = "https://maps.googleapis.com/maps/api/directions/json?origin=" + one + "&destination=" + two + "&key=AIzaSyD1cy06_XQRe1285aw1gbItKK98jDTA3lY";
+        url = "https://maps.googleapis.com/maps/api/directions/json?origin=" + val + "&destination=" + val2 + "&key=AIzaSyD1cy06_XQRe1285aw1gbItKK98jDTA3lY";
         u = new UnityWebRequest(url);
         u.downloadHandler = new DownloadHandlerBuffer();
         coroutine = request(u);
