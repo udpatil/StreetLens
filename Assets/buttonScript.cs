@@ -19,7 +19,7 @@ public class buttonScript : MonoBehaviour {
         myButton = GetComponent<Button>();
         try
         {
-            myButton.onClick.AddListener(() => changeColor());
+            myButton.onClick.AddListener(() => getScreenView());
         }
         catch (System.Exception e)
         {
@@ -33,7 +33,7 @@ public class buttonScript : MonoBehaviour {
 	void Update () {
 	}
 
-    void changeColor()
+    void getScreenView()
     {
         
 

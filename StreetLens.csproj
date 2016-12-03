@@ -78,6 +78,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\NewBehaviourScript.cs" />
     <Compile Include="Assets\buttonScript.cs" />
     <Compile Include="Assets\getImages.cs" />
     <Compile Include="Assets\testScript.cs" />

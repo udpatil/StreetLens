@@ -1,4 +1,4 @@
 sceneSetups:
-- path: Assets/StreetView.unity
+- path: Assets/HoloScreen.unity
   isLoaded: 1
   isActive: 1

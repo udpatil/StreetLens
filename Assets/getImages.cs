@@ -23,10 +23,8 @@ public class getImages : MonoBehaviour {
         
         WWW www = new WWW(s);
         yield return www;
-        Debug.Log(s);
-        Debug.Log(www);
+        Debug.Log(www.url);
         myImage.sprite = Sprite.Create(www.texture, new Rect(0, 0, www.texture.width, www.texture.height), new Vector2(0, 0));
-        Debug.Log(myImage.sprite);
         
     }
 
