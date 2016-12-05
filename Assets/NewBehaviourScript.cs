@@ -16,7 +16,7 @@ public class NewBehaviourScript : MonoBehaviour {
     public Text alert;
 	string url = "";
     //bool startHTTPrequest = false;
-	HashSet<Coordinate> lats = new HashSet<Coordinate>();
+	List<Coordinate> lats = new List<Coordinate>();
 	//HashSet<string> lngs = new HashSet<string>();
 	string startLoc = "start_location";
 	//Button myButton;
@@ -88,34 +88,34 @@ public class NewBehaviourScript : MonoBehaviour {
      }
         while(dummy && !u.downloadHandler.isDone)
         {
-            Debug.Log("NOT FKUIN DONE");
+            Debug.Log("NOT DONE");
         }
 
         if (dummy && u.downloadHandler.isDone)
         {
             
-            Debug.Log(u.downloadHandler.isDone);
+            //Debug.Log(u.downloadHandler.isDone);
             JSON = ((DownloadHandlerBuffer)(u.downloadHandler)).text;
-            Debug.Log(((DownloadHandlerBuffer)(u.downloadHandler)).text);
-            Debug.Log("fghfh:+ " + JSON);
+            //Debug.Log(((DownloadHandlerBuffer)(u.downloadHandler)).text);
+            //Debug.Log("fghfh:+ " + JSON);
             while (JSON.Contains(startLoc))
             {
                 int lastindex = JSON.IndexOf("}", JSON.IndexOf(startLoc));
                 string inProg = JSON.Substring(JSON.IndexOf(startLoc), JSON.Length - lastindex + 1);
                 //Debug.Log("inprog " + inProg);
-                Debug.Log("inProg " + inProg);
+                //Debug.Log("inProg " + inProg);
                 int latIndex = inProg.IndexOf("\"lat\" :");
                 string lat = inProg.Substring(latIndex, inProg.IndexOf(",") - latIndex);
                 foreach (char c in lat)
                 {
                     if (Char.IsDigit(c) || c.Equals('-'))
-                    { 
+                    {
                         lat = lat.Substring(lat.IndexOf(c));
                         lat.Trim();
                         break;
                     }
                 }
-                Debug.Log("lat " + lat);
+                //Debug.Log("lat " + lat);
                 int brace = inProg.IndexOf("}");
                 string lng = inProg.Substring(inProg.IndexOf("\"lng\" :"), inProg.IndexOf("}") - inProg.IndexOf("\"lng\" :"));
                 foreach (char c in lng)
@@ -127,16 +127,32 @@ public class NewBehaviourScript : MonoBehaviour {
                         break;
                     }
                 }
-                Debug.Log("lng " + lng);
+                //Add heading (use next lat and long  - previous and calculate heading with tangent
+                //TODO
+                //Debug.Log("lng " + lng);
                 JSON = JSON.Substring(brace);
-                lats.Add(new Coordinate(lat, lng));
-
+                if (lats.Count > 0)
+                {
+                    Debug.Log("Equal to last? : " + lats.ToArray()[lats.Count - 1].Equals(new Coordinate(lat, lng, 0)));
+                }
+                if (lats.Count == 0 || !lats.ToArray()[lats.Count - 1].Equals(new Coordinate(lat, lng, 0))) { 
+                    lats.Add(new Coordinate(lat, lng, lats.Count > 0 ? calcDir(lats.ToArray()[lats.Count - 1], new Coordinate(lat, lng, 0)) : 0));//TODO figure out how to get this working to make the headings
+                    if (lats.Count > 1)
+                    {
+                        lats.ToArray()[lats.Count - 2].setDir(lats.ToArray()[lats.Count - 1].getDir());
+                    }
+                }
+                //Maybe check difference between latitude and longitude and skip over close points
             }
         }
         if (dummy && u.downloadHandler.isDone && imagesRendered == false)
         {
+
             foreach (Coordinate c in lats)
             {
+                    //implment direction calculation and check to see if same as previous coordinate
+                Debug.Log(c.ToString());
+                //Debug.Log(lats.Count);//Logs lats size  
                 StartCoroutine(retrieveImage(c.getLat(), c.getLng(), c.getDir()));
             }
             imagesRendered = true;
@@ -147,21 +163,29 @@ public class NewBehaviourScript : MonoBehaviour {
 
 
     }
+    double calcDir(Coordinate thisPoint, Coordinate nextPoint)
+    {
+        Debug.Log("Calculating Tangent: " + "\nlat1: " + thisPoint.getLat() + " lng1: " + thisPoint.getLng() + "\nlat2: " + nextPoint.getLat() + " lng2: " + nextPoint.getLng());
+        double dLat = nextPoint.getLat() - thisPoint.getLat();
+        double dLng = nextPoint.getLng() - thisPoint.getLng();
+        double heading = 180 * (Math.Atan(dLat / dLng)) / Math.PI;
+        return heading;
+    }
     IEnumerator request(UnityWebRequest unit) {
 		//yield return unit.Send();
 		yield return u.Send();
 		//p = unit.responseCode;
 	}
-    public IEnumerator retrieveImage(String Lat, String Long, double Direction)
+    public IEnumerator retrieveImage(double Lat, double Long, double Direction)
     {
-        WWW www = null;
-        string s = "https://maps.googleapis.com/maps/api/streetview?size=600x400&location=" + Double.Parse(Lat) + "," + Double.Parse(Long) + "&heading=" + Direction + "&key=" + API_KEY;
-        www = new WWW(s);
-        yield return www;
-        yield return new WaitForSeconds(2);
-        Debug.Log(www.url);
-        if (www.isDone)
-        myImage.sprite = Sprite.Create(www.texture, new Rect(0, 0, www.texture.width, www.texture.height), new Vector2(0, 0));
+            WWW www = null;
+            yield return new WaitForSeconds(20);
+            string s = "https://maps.googleapis.com/maps/api/streetview?size=600x400&location=" + Lat + "," + Long + "&heading=" + Direction + "&key=" + API_KEY;
+            www = new WWW(s);
+            yield return www;
+            //Debug.Log(www.url);
+            if (www.isDone)
+                myImage.sprite = Sprite.Create(www.texture, new Rect(0, 0, www.texture.width, www.texture.height), new Vector2(0, 0));
         //yield return new WaitForSeconds(2);
 
     }
@@ -176,35 +200,69 @@ public class NewBehaviourScript : MonoBehaviour {
         }
         else
         {
+            alert.text = "Calculating route....";
             val = input.text;
             val2 = input2.text;
             Debug.Log(val);
             Debug.Log(val2);
-            alert.text = "Calculating route....";
+            
             startEverything = true;
         }
     }
     private class Coordinate {
-        String lat;
-        String lng;
-        int dir;
-        public Coordinate(String lat, String lng)
+        double lat;
+        double lng;
+        double dir;
+        int hashCode = 1;
+
+        public Coordinate(String lat, String lng, double dirIn)
         {
-            this.lat = lat;
-            this.lng = lng;
-            dir = 150;
+            this.lat = Double.Parse(lat);
+            this.lng = Double.Parse(lng);
+            dir = dirIn;
+            
         }
-        public String getLat()
+        public double getLat()
         {
             return lat;
         }
-        public String getLng()
+        public double getLng()
         {
             return lng;
         }
-        public int getDir()
+        public double getDir()
         {
             return dir;
+        }
+        public void setDir(double dirIn)
+        {
+            dir = dirIn;
+        }
+
+        override
+        public Boolean Equals(System.Object obj)
+        {
+            if (obj == null) return false;
+            if (!(obj is Coordinate)) return false;
+            Coordinate c = (Coordinate) obj;
+            if (c == this) return true;
+            if (this.lat == c.lat && this.lng == c.lng) return true;
+            return false;
+        }
+
+        override
+        public int GetHashCode()
+        {
+            hashCode = (37 * hashCode) + (int)(BitConverter.DoubleToInt64Bits(lat) ^ (BitConverter.DoubleToInt64Bits(lat) >> 32));
+            hashCode = (37 * hashCode) + (int)(BitConverter.DoubleToInt64Bits(lng) ^ (BitConverter.DoubleToInt64Bits(lng) >> 32));
+            hashCode = (37 * hashCode) + (int)(BitConverter.DoubleToInt64Bits(dir) ^ (BitConverter.DoubleToInt64Bits(dir) >> 32));
+            return hashCode;
+        }
+
+        override
+        public String ToString()
+        {
+            return "lat: " + lat + " long: " + lng + " direction: " + dir;
         }
     }
 
